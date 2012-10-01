@@ -1,0 +1,1 @@
+cmd_/home/stud/IHA/MPS/exer4/hello_m.ko := arm-angstrom-linux-gnueabi-ld -EL -r  -T /home/stud/sources/linux-3.2.6/scripts/module-common.lds --build-id  -o /home/stud/IHA/MPS/exer4/hello_m.ko /home/stud/IHA/MPS/exer4/hello_m.o /home/stud/IHA/MPS/exer4/hello_m.mod.o

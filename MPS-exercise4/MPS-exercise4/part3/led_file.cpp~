@@ -1,0 +1,39 @@
+#include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+
+void on()
+{
+	int fd;
+	fd = open("/sys/class/leds/led2/brightness", O_WRONLY);	
+	write(fd, "0", 1);  
+	close(fd);
+}
+
+void off()
+{
+	int fd;
+	fd = open("/sys/class/leds/led2/brightness", O_WRONLY);
+	write(fd, "1", 1);
+	close(fd);
+}
+
+int main(void)
+{
+
+	
+	for(int i = 0; i<20; i++)
+	{
+		on();
+		usleep(100000);
+		off();	
+		usleep(100000);	  
+		
+	}		
+	  
+  return 0;
+}
+
+
+

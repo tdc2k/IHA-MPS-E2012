@@ -1,0 +1,1 @@
+cmd_/home/stud/IHA/MPS/exer4/part2/led1.ko := arm-angstrom-linux-gnueabi-ld -EL -r  -T /home/stud/sources/linux-3.2.6/scripts/module-common.lds --build-id  -o /home/stud/IHA/MPS/exer4/part2/led1.ko /home/stud/IHA/MPS/exer4/part2/led1.o /home/stud/IHA/MPS/exer4/part2/led1.mod.o
