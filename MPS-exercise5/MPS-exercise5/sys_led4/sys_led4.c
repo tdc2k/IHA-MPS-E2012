@@ -168,6 +168,11 @@ ssize_t mygpio_write(struct file *filep, const char __user *ubuf,
 	* retrieve minor from file ptr
 	*/
 	minor = MINOR(filep->f_dentry->d_inode->i_rdev);
+	if(gpio[minor].dir == in)
+	{
+		printk(KERN_ALERT "Error This is an INPUT ONLY");
+		return -EFAULT;	
+	}
 	printk(KERN_ALERT "Writing to MyGpio [Minor] %i \n", minor);
 
 	/*
@@ -199,8 +204,7 @@ ssize_t mygpio_write(struct file *filep, const char __user *ubuf,
 	* Use gpio_set_value on appropriate port 
 	* (if an output port)
 	*/
-	if(gpio[minor].dir == out)
-		gpio_set_value(gpio[minor].num, value);
+	gpio_set_value(gpio[minor].num, value);
 
     *f_pos += count;
     return count;

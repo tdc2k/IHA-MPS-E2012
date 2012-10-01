@@ -1,5 +1,5 @@
 /*                                                     
- * ID: bootkey.c 
+ * ID: exercise5.c 
  */                                                    
 #include <linux/gpio.h>
 #include <linux/fs.h>
@@ -8,9 +8,9 @@
 #include <asm/uaccess.h>
 #include <linux/module.h>
 
-#define MYGPIO_MAJOR  65
+#define MYGPIO_MAJOR  63
 #define MYGPIO_MINOR   0
-#define MYGPIO_CHS     1
+#define MYGPIO_CHS     2
 #define MAXLEN       512
 
 
@@ -19,26 +19,27 @@ struct file_operations mygpio_Fops;
 
 static int devno;
 
-const unsigned int gpio_len = 1;
+const unsigned int gpio_len = 2;
 struct gpioPort{
   unsigned int num;
   enum direnu { in, out } dir;
   const char label[10]; // Very important to specify a size. Just [] causes havoc to gpio indexing
 } gpio[] = {
-  {7, in, "BOOT_KEY"}
+	{164, out, "SYS_LED4"}, {7, in, "BOOT_KEY"}
 };
 
 
 static int mygpio_init(void)
 {
 	int err; 
+	int i;
     
-	printk(KERN_ALERT "MyGPIO BOOT_KEY Module Inserting\n");
+	printk(KERN_ALERT "MyGPIO Module Inserting\n");
   
 	/*
 	* Request GPIO Ressources
 	*/
-	int i;
+	
 	for(i = 0; i < gpio_len; i++)
 	{	
 		if ((err = gpio_request(gpio[i].num, gpio[i].label)) < 0)
@@ -104,7 +105,7 @@ static int mygpio_init(void)
 static void mygpio_exit(void)
 {
 	int i;
-	printk(KERN_NOTICE "Removing MyGPIO BOOT_KEY Module\n");
+	printk(KERN_NOTICE "Removing MyGPIO UserKey Module\n");
 	
 	/*
 	* Delete cdev and unregister device
@@ -156,6 +157,60 @@ int mygpio_release(struct inode *inode, struct file *filep)
     return 0;
 }
 
+
+ssize_t mygpio_write(struct file *filep, const char __user *ubuf, 
+                  size_t count, loff_t *f_pos)
+{
+	int minor, len, value;
+	char kbuf[MAXLEN];
+    
+	/*
+	* retrieve minor from file ptr
+	*/
+	minor = MINOR(filep->f_dentry->d_inode->i_rdev);
+	if(gpio[minor].dir == in)
+	{
+		printk(KERN_ALERT "Error This is an INPUT ONLY");
+		return -EFAULT;	
+	}
+	printk(KERN_ALERT "Writing to MyGpio [Minor] %i \n", minor);
+	
+	
+	/*
+	* Copy data from user space
+	* to kernel space
+	*/  
+	len = count < MAXLEN ? count : MAXLEN; // set len < MAXLEN
+
+	/*
+	*Use copy_from_user to 
+	* get data 
+	*/
+	if(copy_from_user(kbuf, ubuf, len))
+		return -EFAULT;
+	
+	kbuf[len] = '\0';   // Pad null termination to string
+	printk("string from user: %s\n", kbuf);
+
+	/*
+	* Convert string to int
+	* using sscanf
+	*/
+	sscanf(kbuf,"%i", &value);
+	printk("value %i\n", value);
+    
+	value = value > 0 ? 1 : 0;
+
+	/*
+	* Use gpio_set_value on appropriate port 
+	* (if an output port)
+	*/
+	gpio_set_value(gpio[minor].num, value);
+
+    *f_pos += count;
+    return count;
+}
+
 ssize_t mygpio_read(struct file *filep, char __user *buf, size_t count, loff_t *f_pos)
 {
 	char readBuf[MAXLEN];
@@ -198,13 +253,14 @@ struct file_operations mygpio_Fops =
     .owner   = THIS_MODULE,
     .open    = mygpio_open,
     .release = mygpio_release,
+    .write   = mygpio_write,
     .read    = mygpio_read,
 };
 
 module_init(mygpio_init);
 module_exit(mygpio_exit);
 
-MODULE_DESCRIPTION("My GPIO BOOT_KEY Module");
+MODULE_DESCRIPTION("My GPIO Module");
 MODULE_AUTHOR("GTLT-MPS.blogspot.dk <http://www.iha.dk>");
 MODULE_LICENSE("GPL");
 
